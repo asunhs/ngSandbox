@@ -1,0 +1,74 @@
+var gulp = require('gulp');
+var config = require('./gulp.config.json');
+
+var concat = require('gulp-concat');
+var rename = require('gulp-rename');
+
+var uglify = require('gulp-uglify');
+var htmlmin = require('gulp-htmlmin');
+var sass = require('gulp-sass');
+var cssmin = require('gulp-clean-css');
+
+var webpack = require('gulp-webpack');
+var html2js = require('gulp-ng-html2js');
+
+
+gulp.task("index", function () {
+    gulp.src(config.app.index, {
+        base : "src"
+    }).pipe(gulp.dest('dist'));
+});
+
+gulp.task("images", function () {
+    gulp.src(config.app.images, {
+        base : "src"
+    }).pipe(gulp.dest('dist'));
+});
+
+gulp.task("libraries", function () {
+    gulp.src(config.app.libraries, {
+        base : "src"
+    }).pipe(gulp.dest('dist'));
+});
+
+gulp.task("styles", function () {
+    gulp.src(config.app.styles)
+        .pipe(sass.sync())
+        .pipe(cssmin())
+        .pipe(rename("main.min.css"))
+        .pipe(gulp.dest('dist'));
+});
+
+gulp.task("templates", function () {
+    gulp.src(config.app.templates)
+        .pipe(htmlmin({
+            collapseWhitespace : true,
+            minifyCSS : true,
+            minifyJS : true
+        }))
+        .pipe(html2js({
+            moduleName: "templates-html"
+        }))
+        .pipe(concat("templates.min.js"))
+        .pipe(uglify())
+        .pipe(gulp.dest("dist"));
+});
+
+gulp.task("pack", function () {
+    gulp.src(config.app.js)
+        .pipe(webpack({
+            resolve: {
+                alias: {
+                    app: __dirname + "/src/app/app.js"
+                }
+            },
+            output: {
+                filename: 'app.js'
+            }
+        }))
+        .pipe(gulp.dest('dist'));
+});
+
+gulp.task("build", ["styles", "templates", "pack"]);
+
+gulp.task("default", ["index", "images", "libraries", "build"]);
