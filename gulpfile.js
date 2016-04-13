@@ -11,6 +11,7 @@ var cssmin = require('gulp-clean-css');
 
 var webpack = require('gulp-webpack');
 var html2js = require('gulp-ng-html2js');
+var annotate = require('gulp-ng-annotate');
 
 
 gulp.task("index", function () {
@@ -66,6 +67,10 @@ gulp.task("pack", function () {
                 filename: 'app.js'
             }
         }))
+        .pipe(annotate())
+        .pipe(gulp.dest('dist'))
+        .pipe(uglify())
+        .pipe(rename("app.min.js"))
         .pipe(gulp.dest('dist'));
 });
 
