@@ -1,0 +1,22 @@
+{
+  "app" : {
+    "js" : [
+      "src/app/**/*.js"
+    ],
+    "styles" : [
+      "src/styles/main.scss"
+    ],
+    "images" : [
+      "src/images/**/*"
+    ],
+    "templates" : [
+      "src/app/**/*.tpl.html"
+    ],
+    "index" : [
+      "src/index.html"
+    ],
+    "libraries" : [
+      "src/lib/**/*"
+    ]
+  }
+}
