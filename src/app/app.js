@@ -1,4 +1,4 @@
-module.exports = angular.module('packApp', [
+module.exports = angular.module('sandbaxApp', [
     'templates-html'
 ]).config(/* @ngInject */ function ($compileProvider, $httpProvider) {
     $compileProvider.debugInfoEnabled(false);
