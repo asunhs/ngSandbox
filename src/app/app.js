@@ -8,18 +8,21 @@ module.exports = angular.module('sandboxApp', [
     var annotator = aopProvider.getAnnotator('sandboxApp', $provide);
 
     annotator.add({
-        target : /^Sam.*/,
-        rule : [{
+        targetPattern : /^Sam.*/,
+        rules : [{
             jointPoint: "before",
-            advice: "LogTest"
+            advice: "LogTest",
+            methodPattern: /test/
         },{
             jointPoint: "after",
-            advice: "LogTest"
+            advice: "LogTest",
+            methodPattern: /test/
         }]
     });
 }).factory("LogTest", function () {
-    return function () {
-        console.log("HI");
+    return function (data) {
+        console.log(data);
+        console.log("HI, " + data.when + ", " + data.method);
     };
 }).run(/* @ngInject */ function (Sample1) {
     Sample1.test();

@@ -20,13 +20,13 @@
 
             var self = this;
 
-            if (angular.isString(annotation.target)) {
-                executeProvider.annotate(self.$provide, trans(annotation.target, annotation.rule));
-            } else {
+            if (!!annotation.target) {
+                executeProvider.annotate(self.$provide, trans(annotation.target, annotation.rules));
+            } else if (!!annotation.targetPattern) {
                 this.services.filter(function (serviceName) {
-                    return annotation.target.test(serviceName);
+                    return annotation.targetPattern.test(serviceName);
                 }).forEach(function (serviceName) {
-                    executeProvider.annotate(self.$provide, trans(serviceName, annotation.rule));
+                    executeProvider.annotate(self.$provide, trans(serviceName, annotation.rules));
                 });
             }
 
@@ -37,8 +37,6 @@
             target[name] = rule;
             return target;
         }
-
-
 
         function getAnnotator(moduleName, $provide) {
             return new Annotator(moduleName, $provide);
