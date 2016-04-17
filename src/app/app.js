@@ -1,6 +1,7 @@
 module.exports = angular.module('sandboxApp', [
     'templates-html',
-    'ngAOP'
+    'ngAOP',
+    'FlowControl'
 ]).config(/* @ngInject */ function ($compileProvider, $httpProvider) {
     $compileProvider.debugInfoEnabled(false);
     $httpProvider.useApplyAsync(true);
@@ -21,9 +22,16 @@ module.exports = angular.module('sandboxApp', [
     });
 }).factory("LogTest", function () {
     return function (data) {
-        console.log(data);
         console.log("HI, " + data.when + ", " + data.method);
     };
-}).run(/* @ngInject */ function (Sample1) {
+}).run(/* @ngInject */ function (Sample1, $rootScope) {
     Sample1.test();
+
+    $rootScope.$on('flow.lock', (e, data) => {
+        console.log('locked', data.name, data.state);
+    });
+
+    $rootScope.$on('flow.unlock', (e, data) => {
+        console.log('unlocked', data.name, data.state);
+    });
 });

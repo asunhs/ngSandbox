@@ -17,7 +17,7 @@ module.exports = require('app').directive('packSample', /* @ngInject */ function
     };
 });
 
-require('app').service('Sample1', /* @ngInject */ function ($http) {
+require('app').service('Sample1', /* @ngInject */ function ($http, $q, LockTest) {
     var svc = this;
 
     function send() {
@@ -26,9 +26,37 @@ require('app').service('Sample1', /* @ngInject */ function ($http) {
 
     svc.send = send;
 
-    svc.test = function () {
+    function test() {
         console.log("Good");
-    };
+
+        setTimeout(() => {
+            console.log("Call");
+            LockTest.callMeOnce().then(str => $q(resovle => {
+                console.log("More after " + str);
+                setTimeout(() => {
+                    console.log("More End");
+                    resovle();
+                }, 2000);
+            }));
+        }, 200);
+
+        setTimeout(() => {
+            console.log("Call");
+            LockTest.callMeOnce();
+        }, 500);
+
+        setTimeout(() => {
+            console.log("Call");
+            LockTest.callMeOnce();
+        }, 1200);
+
+        setTimeout(() => {
+            console.log("Call");
+            LockTest.callMeOnce();
+        }, 2500);
+    }
+
+    svc.test = test;
 });
 
 
