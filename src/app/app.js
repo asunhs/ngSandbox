@@ -29,7 +29,7 @@ function FlowTest($provide, flowControlProvider) {
     
     decorator.add({
         methodPattern : /Once$/,
-        advice : flowControlProvider.BY_ONE
+        advice : flowControlProvider.DEFER
     });
 }
 

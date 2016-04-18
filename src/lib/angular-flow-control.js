@@ -33,11 +33,21 @@
     
     var Advices = {},
         Flows = {
-            BY_ONE : 'byOne'
+            DEFER : 'defer',
+            DEBOUNCE : 'debounce',
+            THROTTLE : 'throttle'
         };
 
-    Advices[Flows.BY_ONE] = ['$aspect', 'flowControl', function ($aspect, flowControl) {
-        return flowControl.byOne($aspect.method, $aspect.serviceName + "." + $aspect.methodName);
+    Advices[Flows.DEFER] = ['$aspect', 'flowControl', function ($aspect, flowControl) {
+        return flowControl.defer($aspect.method, $aspect.serviceName + "." + $aspect.methodName);
+    }];
+    
+    Advices[Flows.DEBOUNCE] = ['$aspect', 'flowControl', function ($aspect, flowControl) {
+        return flowControl.debounce($aspect.method);
+    }];
+
+    Advices[Flows.THROTTLE] = ['$aspect', 'flowControl', function ($aspect, flowControl) {
+        return flowControl.throttle($aspect.method);
     }];
     
     function getAdvice(advice) {
@@ -48,12 +58,13 @@
         }
     }
 
-    // 1. one by one
+    // 1. defer
     // 2. throttle
     // 3. debounce
     // ...
     FlowControl.provider('flowControl', [function () {
 
+        var defaultTime = 1000;
 
         function Decorator(moduleName, $provide) {
             this.$provide = $provide;
@@ -100,21 +111,27 @@
         function getDecorator(moduleName, $provide) {
             return new Decorator(moduleName, $provide);
         }
+        
+        function setDefaultDebounceTime(time) {
+            defaultTime = time || 1000;
+        }
 
         this.getDecorator = getDecorator;
+        
+        this.setDefaultDebounceTime = setDefaultDebounceTime;
 
         this.$get = ['$q', '$rootScope', function ($q, $rootScope) {
 
             // release
 
-            function byOne(target, name) {
+            function defer(target, name) {
 
                 var lock = {
                         name : name,
                         state : undefined
                     };
 
-                return function __byOneWrapper__() {
+                return function __deferWrapper__() {
 
                     if (lock.state == 'locked') {
                         return;
@@ -137,8 +154,21 @@
                 }
             }
             
+            
+            function debounce(target, time) {
+                return _.debounce(target, time || defaultTime);
+            }
+            
+            
+            function throttle(target, time) {
+                return _.throttle(target, time || defaultTime);
+            }
+            
+            
             return {
-                byOne: byOne
+                defer: defer,
+                debounce: debounce,
+                throttle: throttle
             };
         }];
 
