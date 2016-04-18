@@ -13,7 +13,8 @@ function LockTest($q, FlowControl) {
         });
     }
 
-    this.callMeOnce = FlowControl.byOne(callMeOnce, 'callMeOnce');
+    this.callMeOnce = callMeOnce;
+    //this.callMeOnce = FlowControl.byOne(callMeOnce, 'callMeOnce');
 }
 
 

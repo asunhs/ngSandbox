@@ -1,11 +1,8 @@
-module.exports = angular.module('sandboxApp', [
-    'templates-html',
-    'ngAOP',
-    'FlowControl'
-]).config(/* @ngInject */ function ($compileProvider, $httpProvider) {
-    $compileProvider.debugInfoEnabled(false);
-    $httpProvider.useApplyAsync(true);
-}).config(/* @ngInject */ function ($provide, aopProvider) {
+
+
+/* @ngInject */
+function AOPTest($provide, aopProvider) {
+
     var annotator = aopProvider.getAnnotator('sandboxApp', $provide);
 
     annotator.add({
@@ -20,7 +17,31 @@ module.exports = angular.module('sandboxApp', [
             methodPattern: /test/
         }]
     });
-}).factory("LogTest", function () {
+
+}
+
+
+
+/* @ngInject */
+function FlowTest($provide, FlowControlProvider) {
+    
+    var aspector = FlowControlProvider.getAspector('sandboxApp', $provide);
+    
+    aspector.add({
+        methodPattern : /Once$/
+    });
+}
+
+
+
+module.exports = angular.module('sandboxApp', [
+    'templates-html',
+    'ngAOP',
+    'FlowControl'
+]).config(/* @ngInject */ function ($compileProvider, $httpProvider) {
+    $compileProvider.debugInfoEnabled(false);
+    $httpProvider.useApplyAsync(true);
+}).config(FlowTest).factory("LogTest", function () {
     return function (data) {
         console.log("HI, " + data.when + ", " + data.method);
     };
