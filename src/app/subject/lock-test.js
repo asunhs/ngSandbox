@@ -1,12 +1,12 @@
 
 /* @ngInject */
-function LockTest($q, FlowControl) {
+function LockTest($q) {
 
     // Async and Expensive
     function callMeOnce() {
         console.log("Execute");
         return $q(function (resolve) {
-            setInterval(resolve, 2000);
+            setInterval(resolve, 1800);
         }).then(() => {
             console.log("Done");
             return "Done";

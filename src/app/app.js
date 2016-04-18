@@ -23,12 +23,13 @@ function AOPTest($provide, aopProvider) {
 
 
 /* @ngInject */
-function FlowTest($provide, FlowControlProvider) {
+function FlowTest($provide, flowControlProvider) {
     
-    var aspector = FlowControlProvider.getAspector('sandboxApp', $provide);
+    var decorator = flowControlProvider.getDecorator('sandboxApp', $provide);
     
-    aspector.add({
-        methodPattern : /Once$/
+    decorator.add({
+        methodPattern : /Once$/,
+        advice : flowControlProvider.BY_ONE
     });
 }
 

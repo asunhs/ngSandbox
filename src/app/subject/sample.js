@@ -53,7 +53,7 @@ require('app').service('Sample1', /* @ngInject */ function ($http, $q, LockTest)
         setTimeout(() => {
             console.log("Call");
             LockTest.callMeOnce();
-        }, 2500);
+        }, 4000);
     }
 
     svc.test = test;

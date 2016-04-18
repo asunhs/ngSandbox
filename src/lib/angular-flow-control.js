@@ -29,20 +29,38 @@
         
         return methodNames;
     }
+    
+    
+    var Advices = {},
+        Flows = {
+            BY_ONE : 'byOne'
+        };
+
+    Advices[Flows.BY_ONE] = ['$aspect', 'flowControl', function ($aspect, flowControl) {
+        return flowControl.byOne($aspect.method, $aspect.serviceName + "." + $aspect.methodName);
+    }];
+    
+    function getAdvice(advice) {
+        if (angular.isString(advice) && !!Advices[advice]) {
+            return Advices[advice];
+        } else {
+            return advice;
+        }
+    }
 
     // 1. one by one
     // 2. throttle
     // 3. debounce
     // ...
-    FlowControl.provider('FlowControl', [function () {
+    FlowControl.provider('flowControl', [function () {
 
 
-        function Aspector(moduleName, $provide) {
+        function Decorator(moduleName, $provide) {
             this.$provide = $provide;
             this.services = getServices(moduleName);
         }
         
-        Aspector.prototype.add = function (aspect) {
+        Decorator.prototype.add = function (aspect) {
             
             var self = this,
                 targets;
@@ -56,24 +74,34 @@
             }
             
             targets.forEach(function (serviceName) {
-                self.$provide.decorator(serviceName, ['$delegate', 'FlowControl', function ($delegate, FlowControl) {
-                    
-                    var methodNames = getMethods($delegate, aspect);
+                
+                self.$provide.decorator(serviceName, ['$delegate', '$injector', function ($delegate, $injector) {
 
+                    var methodNames = getMethods($delegate, aspect),
+                        advice = getAdvice(aspect.advice);
+                    
                     methodNames.forEach(function (methodName) {
-                        $delegate[methodName] = FlowControl.byOne($delegate[methodName], serviceName + "." + methodName);
+                        $delegate[methodName] = $injector.invoke(advice, null, {
+                            $aspect : {
+                                target: $delegate,
+                                serviceName: serviceName,
+                                methodName: methodName,
+                                method: $delegate[methodName]
+                            }
+                        });
                     });
                     
                     return $delegate;
                 }]);
+                
             });
         };
         
-        function getAspector(moduleName, $provide) {
-            return new Aspector(moduleName, $provide);
+        function getDecorator(moduleName, $provide) {
+            return new Decorator(moduleName, $provide);
         }
 
-        this.getAspector = getAspector;
+        this.getDecorator = getDecorator;
 
         this.$get = ['$q', '$rootScope', function ($q, $rootScope) {
 
@@ -108,10 +136,13 @@
                     return result;
                 }
             }
-
+            
             return {
                 byOne: byOne
             };
         }];
+
+        angular.extend(this, Flows);
+        
     }]);
 })();
