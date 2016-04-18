@@ -23,13 +23,15 @@ function AOPTest($provide, aopProvider) {
 
 
 /* @ngInject */
-function FlowTest($provide, flowControlProvider) {
+function FlowTest($provide, annotatorProvider) {
     
-    var decorator = flowControlProvider.getDecorator('sandboxApp', $provide);
+    var decorator = annotatorProvider.getDecorator('sandboxApp', $provide);
     
     decorator.add({
-        methodPattern : /Once$/,
-        advice : flowControlProvider.DEFER
+        rules: [{
+            methodPattern : /Once$/,
+            advice : annotatorProvider.DEFER
+        }]
     });
 }
 
@@ -38,7 +40,7 @@ function FlowTest($provide, flowControlProvider) {
 module.exports = angular.module('sandboxApp', [
     'templates-html',
     'ngAOP',
-    'FlowControl'
+    'Annotator'
 ]).config(/* @ngInject */ function ($compileProvider, $httpProvider) {
     $compileProvider.debugInfoEnabled(false);
     $httpProvider.useApplyAsync(true);
