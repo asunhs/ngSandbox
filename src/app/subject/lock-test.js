@@ -3,8 +3,8 @@
 function LockTest($q) {
 
     // Async and Expensive
-    function callMeOnce() {
-        console.log("Execute");
+    function callMeOnce(key) {
+        console.log("Execute : " + key);
         return $q(function (resolve) {
             setInterval(resolve, 1800);
         }).then(() => {

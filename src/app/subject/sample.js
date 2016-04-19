@@ -1,9 +1,13 @@
 
 /* @ngInject */
-function SampleCtrl ($scope) {
+function SampleCtrl ($scope, $api) {
     $scope.name = "Foods";
+    
+    $api.helloOnce = function () {
+        console.log("Hello");
+    };
 }
-
+    
 function hello(fn) {
     fn("hello");
 }
@@ -13,9 +17,9 @@ hello(str => console.log(str));
 module.exports = require('app').directive('packSample', /* @ngInject */ function () {
     return {
         templateUrl: "subject/sample.tpl.html",
-        controller: SampleCtrl
+        controller: 'SampleCtrl'
     };
-});
+}).controller('SampleCtrl', SampleCtrl);
 
 require('app').service('Sample1', /* @ngInject */ function ($http, $q, LockTest) {
     var svc = this;
@@ -42,7 +46,7 @@ require('app').service('Sample1', /* @ngInject */ function ($http, $q, LockTest)
 
         setTimeout(() => {
             console.log("Call");
-            LockTest.callMeOnce();
+            LockTest.callMeOnce(5);
         }, 500);
 
         setTimeout(() => {

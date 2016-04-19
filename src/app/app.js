@@ -27,10 +27,18 @@ function FlowTest($provide, annotatorProvider) {
     
     var decorator = annotatorProvider.getDecorator('sandboxApp', $provide);
     
-    decorator.add({
+    decorator.service({
         rules: [{
             methodPattern : /Once$/,
-            advice : annotatorProvider.DEFER
+            advice : annotatorProvider.DEFER_BY_KEY
+        }]
+    });
+    
+    decorator.controller({
+        targetPattern : /Ctrl$/,
+        rules: [{
+            methodPattern : /Once$/,
+            advice : annotatorProvider.THROTTLE
         }]
     });
 }
@@ -51,11 +59,11 @@ module.exports = angular.module('sandboxApp', [
 }).run(/* @ngInject */ function (Sample1, $rootScope) {
     Sample1.test();
 
-    $rootScope.$on('flow.lock', (e, data) => {
+    $rootScope.$on('defer.lock', (e, data) => {
         console.log('locked', data.name, data.state);
     });
 
-    $rootScope.$on('flow.unlock', (e, data) => {
+    $rootScope.$on('defer.unlock', (e, data) => {
         console.log('unlocked', data.name, data.state);
     });
 });
