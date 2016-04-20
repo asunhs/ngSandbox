@@ -1,13 +1,19 @@
 
+function bye() {
+    console.log("Bye");
+}
+
+
 /* @ngInject */
 function SampleCtrl ($scope, $api) {
+    
     $scope.name = "Foods";
     
-    $api.helloOnce = function () {
-        console.log("Hello");
-    };
+    $api({
+        byeOnce : bye
+    });
 }
-    
+
 function hello(fn) {
     fn("hello");
 }
@@ -17,6 +23,16 @@ hello(str => console.log(str));
 module.exports = require('app').directive('packSample', /* @ngInject */ function () {
     return {
         templateUrl: "subject/sample.tpl.html",
+        compile: function compile(tElement, tAttrs, transclude) {
+            return {
+                pre: function (scope, element, attr) {
+                    console.log("Pre", scope.name);
+                },
+                post : function (scope, element, attr) {
+                    console.log("Post", scope.name);
+                }
+            };
+        },
         controller: 'SampleCtrl'
     };
 }).controller('SampleCtrl', SampleCtrl);

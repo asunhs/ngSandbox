@@ -5,12 +5,14 @@
 
     var Annotator = angular.module('Annotator', []);
 
-    function getServices(moduleName) {
-        return angular.module(moduleName)._invokeQueue.filter(function (info) {
-            return info[1] === "service" || info[1] === "factory" || info[1] === "provider";
-        }).map(function (info) {
-            return info[2][0];
-        });
+    function getServices(moduleNames) {
+        return moduleNames.map(function (moduleName) {
+            return angular.module(moduleName)._invokeQueue.filter(function (info) {
+                return info[1] === "service" || info[1] === "factory" || info[1] === "provider";
+            }).map(function (info) {
+                return info[2][0];
+            });
+        }).reduce(function (lhs, rhs) { return lhs.concat(rhs); });
     }
 
     function getMethods(target, rule) {
@@ -39,20 +41,20 @@
             THROTTLE : 'throttle'
         };
 
-    Advices[Flows.DEFER] = ['$aspect', 'annotator', function ($aspect, annotator) {
-        return annotator.defer($aspect.method, $aspect.targetName + "." + $aspect.methodName);
+    Advices[Flows.DEFER] = ['$delegate', '$aspect', 'annotator', function ($delegate, $aspect, annotator) {
+        return annotator.defer($delegate, $aspect.targetName + "." + $aspect.methodName);
     }];
 
-    Advices[Flows.DEFER_BY_KEY] = ['$aspect', 'annotator', function ($aspect, annotator) {
-        return annotator.defer($aspect.method, $aspect.targetName + "." + $aspect.methodName, true);
+    Advices[Flows.DEFER_BY_KEY] = ['$delegate', '$aspect', 'annotator', function ($delegate, $aspect, annotator) {
+        return annotator.defer($delegate, $aspect.targetName + "." + $aspect.methodName, true);
     }];
     
-    Advices[Flows.DEBOUNCE] = ['$aspect', 'annotator', function ($aspect, annotator) {
-        return annotator.debounce($aspect.method);
+    Advices[Flows.DEBOUNCE] = ['$delegate', 'annotator', function ($delegate, annotator) {
+        return annotator.debounce($delegate);
     }];
 
-    Advices[Flows.THROTTLE] = ['$aspect', 'annotator', function ($aspect, annotator) {
-        return annotator.throttle($aspect.method);
+    Advices[Flows.THROTTLE] = ['$delegate', 'annotator', function ($delegate, annotator) {
+        return annotator.throttle($delegate);
     }];
     
     function getAdvice(advice) {
@@ -74,19 +76,17 @@
         
         function getLocals(target, targetName, methodName) {
             return {
-                $delegate : target,
+                $delegate : target[methodName],
                 $aspect : {
+                    target: target,
                     targetName: targetName,
-                    methodName: methodName,
-                    method: target[methodName]
+                    methodName: methodName
                 }
             };
         }
         
-        function Decorator(moduleName, $provide) {
-            
+        function Decorator($provide) {
             this.$provide = $provide;
-            this.services = getServices(moduleName);
         }
         
         Decorator.prototype.controller = function (aspect) {
@@ -95,81 +95,86 @@
                 rules = angular.isArray(aspect.rules) ? aspect.rules : [aspect.rules];
             
             self.$provide.decorator('$controller', ['$delegate', '$injector', function ($delegate, $injector) {
-                return function (constructor, locals) {
+                return function (constructor, locals, later) {
+                    var apis = {},
+                        $api = function (obj) {
+                            angular.extend(apis, obj);
+                        };
+                    
+                    locals.$api = $api;
+                    
                     var controllerInit = $delegate.apply(this, arguments),
-                        instance = controllerInit.instance,
-                        origInit = instance.$onInit,
                         targetName = angular.isString(constructor) ? constructor : undefined;
                     
-                    locals.$api = {};
-                    
                     function isTarget() {
-                        
                         if (!aspect.target && !aspect.targetPattern) {
                             return true;
                         }
-                        
                         if (!targetName) {
                             return false;
                         }
-                        
                         if (angular.isString(aspect.target) && targetName != aspect.target) {
                             return false;
                         }
-                        
                         if (!!aspect.targetPattern && !aspect.targetPattern.test(targetName)) {
                             return false;
                         }
-                        
                         return true;
                     }
                     
-                    function hook() {
+                    function hook(instance) {
                         
                         if (isTarget()) {
                             rules.forEach(function (rule) {
-                                var methodNames = getMethods(locals.$api, rule),
+                                var methodNames = getMethods(apis, rule),
                                     advice = getAdvice(rule.advice);
     
                                 methodNames.forEach(function (methodName) {
-                                    locals.$api[methodName] = $injector.invoke(advice, null, getLocals(locals.$api, targetName, methodName));
+                                    apis[methodName] = $injector.invoke(advice, null, getLocals(apis, targetName, methodName));
                                 });
                             });
                         }
                         
-                        angular.extend(locals.$scope, locals.$api);
+                        angular.extend(locals.$scope, apis);
                         
-                        instance.$onInit = origInit;
+                        return instance;
                     }
                     
-                    if (angular.isFunction(origInit)) {
-                        instance.$onInit = function () {
-                            origInit.call(instance);
-                            hook.call(instance);
-                        };
-                    } else {
-                        instance.$onInit = hook;
-                    }
-                    
-                    return controllerInit;
+                    return angular.extend(function () {
+                        return hook(controllerInit());
+                    }, controllerInit);
                 };
             }]);
             
         };
         
+        Decorator.prototype.getTargetServices = function (aspect) {
+            if (angular.isString(aspect.target)) {
+                return [aspect.target];
+            }
+            
+            var modules;
+            
+            if (angular.isString(aspect.modules)) {
+                modules = [aspect.modules];
+            } else if (angular.isArray(aspect.modules) && aspect.modules.length > 0) {
+                modules = aspect.modules;
+            } else {
+                throw "no conditional or service pattern matching for finding services need specific modules { modules: [] }";
+            }
+
+            if (!!aspect.targetPattern) {
+                return getServices(modules).filter(aspect.targetPattern.test);
+            } else {
+                return getServices(modules);
+            }
+        };
+        
         Decorator.prototype.service = function (aspect) {
             
             var self = this,
-                targets,
+                targets = self.getTargetServices(aspect),
                 rules = angular.isArray(aspect.rules) ? aspect.rules : [aspect.rules];
-            
-            if (angular.isString(aspect.target)) {
-                targets = [aspect.target];
-            } else if (!!aspect.targetPattern) {
-                targets = self.services.filter(aspect.targetPattern.test);
-            } else {
-                targets = self.services;
-            }
             
             targets.forEach(function (targetName) {
                 

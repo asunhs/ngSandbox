@@ -25,9 +25,10 @@ function AOPTest($provide, aopProvider) {
 /* @ngInject */
 function FlowTest($provide, annotatorProvider) {
     
-    var decorator = annotatorProvider.getDecorator('sandboxApp', $provide);
+    var decorator = annotatorProvider.getDecorator($provide);
     
     decorator.service({
+        modules: ['sandboxApp'],
         rules: [{
             methodPattern : /Once$/,
             advice : annotatorProvider.DEFER_BY_KEY
