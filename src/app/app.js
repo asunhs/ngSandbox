@@ -23,7 +23,16 @@ function AOPTest($provide, aopProvider) {
 
 
 /* @ngInject */
-function FlowTest($provide, annotatorProvider) {
+function FlowTest($provide, annotatorProvider, simpleAdviceProvider) {
+    
+    function register(key) {
+        annotatorProvider.registerAdvice(key, simpleAdviceProvider.getAdvice(key));
+    }
+
+    register(simpleAdviceProvider.DEFER);
+    register(simpleAdviceProvider.DEFER_BY_KEY);
+    register(simpleAdviceProvider.DEBOUNCE);
+    register(simpleAdviceProvider.THROTTLE);
     
     var decorator = annotatorProvider.getDecorator($provide);
     
@@ -31,7 +40,7 @@ function FlowTest($provide, annotatorProvider) {
         modules: ['sandboxApp'],
         rules: [{
             methodPattern : /Once$/,
-            advice : annotatorProvider.DEFER_BY_KEY
+            advice : simpleAdviceProvider.DEFER_BY_KEY
         }]
     });
     
@@ -39,7 +48,7 @@ function FlowTest($provide, annotatorProvider) {
         targetPattern : /Ctrl$/,
         rules: [{
             methodPattern : /Once$/,
-            advice : annotatorProvider.THROTTLE
+            advice : simpleAdviceProvider.THROTTLE
         }]
     });
 }
@@ -49,7 +58,8 @@ function FlowTest($provide, annotatorProvider) {
 module.exports = angular.module('sandboxApp', [
     'templates-html',
     'ngAOP',
-    'Annotator'
+    'Annotator',
+    'SimpleAdvice'
 ]).config(/* @ngInject */ function ($compileProvider, $httpProvider) {
     $compileProvider.debugInfoEnabled(false);
     $httpProvider.useApplyAsync(true);

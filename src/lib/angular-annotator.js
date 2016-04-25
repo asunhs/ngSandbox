@@ -1,8 +1,6 @@
 (function () {
     'use strict';
 
-    var slice = Array.prototype.slice;
-
     var Annotator = angular.module('Annotator', []);
 
     function getServices(moduleNames) {
@@ -33,29 +31,7 @@
     }
     
     
-    var Advices = {},
-        Flows = {
-            DEFER : 'defer',
-            DEFER_BY_KEY : 'deferByKey',    
-            DEBOUNCE : 'debounce',
-            THROTTLE : 'throttle'
-        };
-
-    Advices[Flows.DEFER] = ['$delegate', '$aspect', 'annotator', function ($delegate, $aspect, annotator) {
-        return annotator.defer($delegate, $aspect.targetName + "." + $aspect.methodName);
-    }];
-
-    Advices[Flows.DEFER_BY_KEY] = ['$delegate', '$aspect', 'annotator', function ($delegate, $aspect, annotator) {
-        return annotator.defer($delegate, $aspect.targetName + "." + $aspect.methodName, true);
-    }];
-    
-    Advices[Flows.DEBOUNCE] = ['$delegate', 'annotator', function ($delegate, annotator) {
-        return annotator.debounce($delegate);
-    }];
-
-    Advices[Flows.THROTTLE] = ['$delegate', 'annotator', function ($delegate, annotator) {
-        return annotator.throttle($delegate);
-    }];
+    var Advices = {};
     
     function getAdvice(advice) {
         if (angular.isString(advice) && !!Advices[advice]) {
@@ -71,9 +47,6 @@
     // ...
     Annotator.provider('annotator', [function () {
 
-        var defaultDebounceTime = 1000,
-            defaultThrottleTime = 1000;
-        
         function getLocals(target, targetName, methodName) {
             return {
                 $delegate : target[methodName],
@@ -199,88 +172,18 @@
             return new Decorator(moduleName, $provide);
         }
         
-        function setDefaultDebounceTime(time) {
-            defaultDebounceTime = time || 1000;
-        }
-
-        function setDefaultThrottleTime(time) {
-            defaultThrottleTime = time || 1000;
+        function registerAdvice(key, advice) {
+            Advices[key] = advice;
         }
 
         this.getDecorator = getDecorator;
-        this.setDefaultDebounceTime = setDefaultDebounceTime;
-        this.setDefaultThrottleTime = setDefaultThrottleTime;
-
-        this.$get = ['$q', '$rootScope', function ($q, $rootScope) {
-
-            function Lock(name) {
-                this.name = name;
-                this.state = undefined;
-            }
-            
-            Lock.defaultKey = 'DEFAULT';
-            Lock.LOCKED = 'LOCKED';
-            Lock.UNLOCKED = 'UNLOCKED';
-            Lock.LOCKE_EVENT = 'defer.lock';
-            Lock.UNLOCKE_EVENT = 'defer.unlock';
-
-            function defer(target, name, usingKey) {
-
-                var locks = {};
-
-                return function __deferWrapper__(key) {
-                    
-                    var lock;
-                    
-                    key = (!usingKey || !key) ? Lock.defaultKey : key;
-                    
-                    if (!locks[key]) {
-                        locks[key] = new Lock(name);
-                    }
-                    
-                    lock = locks[key];
-
-                    if (lock.state == Lock.LOCKED) {
-                        return;
-                    }
-
-                    var args = slice.call(arguments);
-
-                    lock.state = Lock.LOCKED;
-
-                    $rootScope.$emit(Lock.LOCKE_EVENT, lock);
-
-                    var result = target.apply(this, args);
-
-                    $q.when(result).finally(function () {
-                        lock.state = undefined;
-                        $rootScope.$emit(Lock.UNLOCKE_EVENT, lock);
-                        delete locks[key];
-                    });
-
-                    return result;
-                }
-            }
-            
-            
-            function debounce(target, time) {
-                return _.debounce(target, time || defaultDebounceTime);
-            }
-            
-            
-            function throttle(target, time) {
-                return _.throttle(target, time || defaultThrottleTime);
-            }
-            
-            
+        this.registerAdvice = registerAdvice;
+        
+        this.$get = [function () {
             return {
-                defer: defer,
-                debounce: debounce,
-                throttle: throttle
+                getDecorator: getDecorator
             };
         }];
 
-        angular.extend(this, Flows);
-        
     }]);
 })();
