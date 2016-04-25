@@ -52,7 +52,7 @@ function FlowTest($provide, annotatorProvider, simpleAdviceProvider) {
             }
         },{
             methodPattern : /One$/,
-            advice : simpleAdviceProvider.THROTTLE
+            advice : simpleAdviceProvider.LEADING
         }]
     });
 

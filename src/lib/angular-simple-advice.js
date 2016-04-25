@@ -10,6 +10,7 @@
             DEFER : 'defer',
             DEFER_BY_KEY : 'deferByKey',
             DEBOUNCE : 'debounce',
+            LEADING : 'leading',
             THROTTLE : 'throttle'
         };
 
@@ -23,6 +24,10 @@
 
     Advices[Flows.DEBOUNCE] = ['$delegate', 'simpleAdvice', function ($delegate, simpleAdvice) {
         return simpleAdvice.debounce($delegate);
+    }];
+
+    Advices[Flows.LEADING] = ['$delegate', 'simpleAdvice', function ($delegate, simpleAdvice) {
+        return simpleAdvice.leading($delegate);
     }];
 
     Advices[Flows.THROTTLE] = ['$delegate', 'simpleAdvice', function ($delegate, simpleAdvice) {
@@ -44,10 +49,15 @@
     SimpleAdvice.provider('simpleAdvice', [function () {
 
         var defaultDebounceTime = 1000,
+            defaultLeadingTime = 1000,
             defaultThrottleTime = 1000;
 
         function setDefaultDebounceTime(time) {
             defaultDebounceTime = time || 1000;
+        }
+
+        function setDefaultLeadingTime(time) {
+            defaultLeadingTime = time || 1000;
         }
 
         function setDefaultThrottleTime(time) {
@@ -62,6 +72,7 @@
         }
 
         this.setDefaultDebounceTime = setDefaultDebounceTime;
+        this.setDefaultLeadingTime = setDefaultLeadingTime;
         this.setDefaultThrottleTime = setDefaultThrottleTime;
         
         this.getAdvice = getAdvice;
@@ -117,9 +128,16 @@
                     return result;
                 }
             }
-            
+
             function debounce(target, time) {
                 return _.debounce(target, time || defaultDebounceTime);
+            }
+
+            function leading(target, time) {
+                return _.debounce(target, time || defaultLeadingTime, {
+                    leading : true,
+                    trailing : false
+                });
             }
 
             function throttle(target, time) {
@@ -129,6 +147,7 @@
             return angular.extend({
                 defer: defer,
                 debounce: debounce,
+                leading: leading,
                 throttle: throttle
             }, Flows);
         }];
