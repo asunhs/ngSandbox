@@ -44,7 +44,19 @@ function FlowTest($provide, annotatorProvider, simpleAdviceProvider) {
         targetPattern : /Ctrl$/,
         rules: [{
             methodPattern : /One$/,
-            advice : simpleAdviceProvider.DEBOUNCE
+            jointPoint : annotatorProvider.BEFORE,
+            advice : /* @ngInject */ function ($aspect) {
+                return () => console.log($aspect.targetName + "." + $aspect.methodName);
+            }
+        },{
+            methodPattern : /One$/,
+            jointPoint : annotatorProvider.AFTER,
+            advice : /* @ngInject */ function ($aspect) {
+                return result => console.log($aspect.targetName + "." + $aspect.methodName, result);
+            }
+        },{
+            methodPattern : /One$/,
+            advice : simpleAdviceProvider.THROTTLE
         }]
     });
 

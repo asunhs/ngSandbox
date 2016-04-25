@@ -126,11 +126,28 @@
                 return _.throttle(target, time || defaultThrottleTime);
             }
             
-            return {
+            function before(target, consumer) {
+                return function () {
+                    consumer();
+                    return target.apply(this, slice.call(arguments));
+                };
+            }
+            
+            function after(target, functor) {
+                return function () {
+                    var result = target.apply(this, slice.call(arguments));
+                    functor(result);
+                    return result;
+                };
+            }
+            
+            return angular.extend({
+                before: before,
+                after: after,
                 defer: defer,
                 debounce: debounce,
                 throttle: throttle
-            };
+            }, Flows);
         }];
 
         angular.extend(this, Flows);
