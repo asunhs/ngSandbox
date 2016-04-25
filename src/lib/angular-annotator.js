@@ -31,7 +31,8 @@
     }
     
     
-    var Advices = {};
+    var Advices = {},
+        DECORATED = "__decorated";
     
     function getAdvice(advice) {
         if (angular.isString(advice) && !!Advices[advice]) {
@@ -69,14 +70,8 @@
             
             self.$provide.decorator('$controller', ['$delegate', '$injector', function ($delegate, $injector) {
                 return function (constructor, locals, later) {
-                    var apis = {},
-                        $api = function (obj) {
-                            angular.extend(apis, obj);
-                        };
-                    
-                    locals.$api = $api;
-                    
-                    var controllerInit = $delegate.apply(this, arguments),
+                    var scope = locals.$scope,
+                        controllerInit = $delegate.apply(this, arguments),
                         targetName = angular.isString(constructor) ? constructor : undefined;
                     
                     function isTarget() {
@@ -97,18 +92,22 @@
                     
                     function hook(instance) {
                         
+                        var cache = {};
+                        
                         if (isTarget()) {
                             rules.forEach(function (rule) {
-                                var methodNames = getMethods(apis, rule),
+                                var methodNames = getMethods(scope, rule),
                                     advice = getAdvice(rule.advice);
     
                                 methodNames.forEach(function (methodName) {
-                                    apis[methodName] = $injector.invoke(advice, null, getLocals(apis, targetName, methodName));
+                                    if (!cache[methodName] && scope[methodName][DECORATED] == DECORATED) {
+                                        return;
+                                    }
+                                    scope[methodName] = $injector.invoke(advice, null, getLocals(scope, targetName, methodName));
+                                    scope[methodName][DECORATED] = cache[methodName] = DECORATED;
                                 });
                             });
                         }
-                        
-                        angular.extend(locals.$scope, apis);
                         
                         return instance;
                     }
@@ -121,7 +120,7 @@
             
         };
         
-        Decorator.prototype.getTargetServices = function (aspect) {
+        function getTargetServices(aspect) {
             if (angular.isString(aspect.target)) {
                 return [aspect.target];
             }
@@ -141,12 +140,12 @@
             } else {
                 return getServices(modules);
             }
-        };
+        }
         
         Decorator.prototype.service = function (aspect) {
             
             var self = this,
-                targets = self.getTargetServices(aspect),
+                targets = getTargetServices(aspect),
                 rules = angular.isArray(aspect.rules) ? aspect.rules : [aspect.rules];
             
             targets.forEach(function (targetName) {

@@ -5,13 +5,10 @@ function bye() {
 
 
 /* @ngInject */
-function SampleCtrl ($scope, $api) {
-    
+function SampleCtrl ($scope, Sample1) {
     $scope.name = "Foods";
-    
-    $api({
-        byeOnce : bye
-    });
+    $scope.bye = () => Sample1.byeOne();
+    $scope.byeOne = () => console.log("Good");
 }
 
 function hello(fn) {
@@ -77,6 +74,8 @@ require('app').service('Sample1', /* @ngInject */ function ($http, $q, LockTest)
     }
 
     svc.test = test;
+    
+    svc.byeOne = bye;
 });
 
 

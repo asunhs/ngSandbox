@@ -53,11 +53,19 @@
         function setDefaultThrottleTime(time) {
             defaultThrottleTime = time || 1000;
         }
+        
+        function forEach(fn) {
+            var key;
+            for (key in Flows) {
+                fn(Flows[key], Advices[Flows[key]]);
+            }
+        }
 
         this.setDefaultDebounceTime = setDefaultDebounceTime;
         this.setDefaultThrottleTime = setDefaultThrottleTime;
         
         this.getAdvice = getAdvice;
+        this.forEach = forEach;
 
         this.$get = ['$q', '$rootScope', function ($q, $rootScope) {
 

@@ -25,14 +25,7 @@ function AOPTest($provide, aopProvider) {
 /* @ngInject */
 function FlowTest($provide, annotatorProvider, simpleAdviceProvider) {
     
-    function register(key) {
-        annotatorProvider.registerAdvice(key, simpleAdviceProvider.getAdvice(key));
-    }
-
-    register(simpleAdviceProvider.DEFER);
-    register(simpleAdviceProvider.DEFER_BY_KEY);
-    register(simpleAdviceProvider.DEBOUNCE);
-    register(simpleAdviceProvider.THROTTLE);
+    simpleAdviceProvider.forEach(annotatorProvider.registerAdvice);
     
     var decorator = annotatorProvider.getDecorator($provide);
     
@@ -41,16 +34,21 @@ function FlowTest($provide, annotatorProvider, simpleAdviceProvider) {
         rules: [{
             methodPattern : /Once$/,
             advice : simpleAdviceProvider.DEFER_BY_KEY
+        },{
+            methodPattern : /One$/,
+            advice : simpleAdviceProvider.DEBOUNCE
         }]
     });
     
     decorator.controller({
         targetPattern : /Ctrl$/,
         rules: [{
-            methodPattern : /Once$/,
-            advice : simpleAdviceProvider.THROTTLE
+            methodPattern : /One$/,
+            advice : simpleAdviceProvider.DEBOUNCE
         }]
     });
+
+    simpleAdviceProvider.setDefaultDebounceTime(500);
 }
 
 
