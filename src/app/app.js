@@ -27,9 +27,7 @@ function FlowTest($provide, annotatorProvider, simpleAdviceProvider) {
     
     simpleAdviceProvider.forEach(annotatorProvider.registerAdvice);
     
-    var decorator = annotatorProvider.getDecorator($provide);
-    
-    decorator.service({
+    annotatorProvider.getDecorator($provide).service({
         modules: ['sandboxApp'],
         rules: [{
             methodPattern : /Once$/,
@@ -38,9 +36,7 @@ function FlowTest($provide, annotatorProvider, simpleAdviceProvider) {
             methodPattern : /One$/,
             advice : simpleAdviceProvider.DEBOUNCE
         }]
-    });
-    
-    decorator.controller({
+    }).controller({
         targetPattern : /Ctrl$/,
         rules: [{
             methodPattern : /One$/,

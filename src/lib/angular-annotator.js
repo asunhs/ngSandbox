@@ -158,6 +158,7 @@
                 };
             }]);
             
+            return this;
         };
         
         function getTargetServices(aspect) {
@@ -214,6 +215,8 @@
                 }]);
                 
             });
+
+            return this;
         };
         
         function getDecorator(moduleName, $provide) {
