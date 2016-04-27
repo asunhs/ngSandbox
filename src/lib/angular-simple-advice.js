@@ -15,13 +15,15 @@
         };
 
     Advices[Flows.DEFER] = ['$delegate', '$aspect', '$scope', 'simpleAdvice', function ($delegate, $aspect, $scope, simpleAdvice) {
-        return simpleAdvice.defer($delegate, $aspect.targetName + "." + $aspect.methodName, {
+        return simpleAdvice.defer($delegate, {
+            name : $aspect.targetName + "." + $aspect.methodName,
             scope : $scope
         });
     }];
 
     Advices[Flows.DEFER_BY_KEY] = ['$delegate', '$aspect', '$scope', 'simpleAdvice', function ($delegate, $aspect, $scope, simpleAdvice) {
-        return simpleAdvice.defer($delegate, $aspect.targetName + "." + $aspect.methodName, {
+        return simpleAdvice.defer($delegate, {
+            name : $aspect.targetName + "." + $aspect.methodName,
             usingKey : true,
             scope : $scope
         });
@@ -96,11 +98,12 @@
             Lock.LOCKE_EVENT = 'defer.lock';
             Lock.UNLOCKE_EVENT = 'defer.unlock';
             
-            function defer(target, name, options) {
+            function defer(target, options) {
                 
                 options = options || {};
 
                 var locks = {},
+                    name = options.name,
                     usingKey = !!options.usingKey,
                     scope = options.scope || $rootScope;
 
