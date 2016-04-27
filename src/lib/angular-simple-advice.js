@@ -14,12 +14,17 @@
             THROTTLE : 'throttle'
         };
 
-    Advices[Flows.DEFER] = ['$delegate', '$aspect', 'simpleAdvice', function ($delegate, $aspect, simpleAdvice) {
-        return simpleAdvice.defer($delegate, $aspect.targetName + "." + $aspect.methodName);
+    Advices[Flows.DEFER] = ['$delegate', '$aspect', '$scope', 'simpleAdvice', function ($delegate, $aspect, $scope, simpleAdvice) {
+        return simpleAdvice.defer($delegate, $aspect.targetName + "." + $aspect.methodName, {
+            scope : $scope
+        });
     }];
 
-    Advices[Flows.DEFER_BY_KEY] = ['$delegate', '$aspect', 'simpleAdvice', function ($delegate, $aspect, simpleAdvice) {
-        return simpleAdvice.defer($delegate, $aspect.targetName + "." + $aspect.methodName, true);
+    Advices[Flows.DEFER_BY_KEY] = ['$delegate', '$aspect', '$scope', 'simpleAdvice', function ($delegate, $aspect, $scope, simpleAdvice) {
+        return simpleAdvice.defer($delegate, $aspect.targetName + "." + $aspect.methodName, {
+            usingKey : true,
+            scope : $scope
+        });
     }];
 
     Advices[Flows.DEBOUNCE] = ['$delegate', 'simpleAdvice', function ($delegate, simpleAdvice) {
@@ -90,10 +95,14 @@
             Lock.UNLOCKED = 'UNLOCKED';
             Lock.LOCKE_EVENT = 'defer.lock';
             Lock.UNLOCKE_EVENT = 'defer.unlock';
+            
+            function defer(target, name, options) {
+                
+                options = options || {};
 
-            function defer(target, name, usingKey) {
-
-                var locks = {};
+                var locks = {},
+                    usingKey = !!options.usingKey,
+                    scope = options.scope || $rootScope;
 
                 return function __deferWrapper__(key) {
 
@@ -115,13 +124,13 @@
 
                     lock.state = Lock.LOCKED;
 
-                    $rootScope.$emit(Lock.LOCKE_EVENT, lock);
+                    scope.$emit(Lock.LOCKE_EVENT, lock);
 
                     var result = target.apply(this, args);
 
                     $q.when(result).finally(function () {
                         lock.state = undefined;
-                        $rootScope.$emit(Lock.UNLOCKE_EVENT, lock);
+                        scope.$emit(Lock.UNLOCKE_EVENT, lock);
                         delete locks[key];
                     });
 

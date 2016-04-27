@@ -73,14 +73,15 @@
     // ...
     Annotator.provider('annotator', [function () {
 
-        function getLocals(target, targetName, methodName) {
+        function getLocals(target, targetName, methodName, scope) {
             return {
                 $delegate : target[methodName],
                 $aspect : {
                     target: target,
                     targetName: targetName,
                     methodName: methodName
-                }
+                },
+                $scope : scope
             };
         }
         
@@ -139,12 +140,12 @@
                                     var joiner = Aspects[rule.jointPoint];
 
                                     return decorate(methodNames, function (methodName) {
-                                        return joiner(scope[methodName], $injector.invoke(advice, null, getLocals(scope, targetName, methodName)));
+                                        return joiner(scope[methodName], $injector.invoke(advice, null, getLocals(scope, targetName, methodName, scope)));
                                     });
                                 }
     
                                 decorate(methodNames, function (methodName) {
-                                    return $injector.invoke(advice, null, getLocals(scope, targetName, methodName));
+                                    return $injector.invoke(advice, null, getLocals(scope, targetName, methodName, scope));
                                 });
                             });
                         }
@@ -191,7 +192,7 @@
             
             targets.forEach(function (targetName) {
                 
-                self.$provide.decorator(targetName, ['$delegate', '$injector', function ($delegate, $injector) {
+                self.$provide.decorator(targetName, ['$delegate', '$injector', '$rootScope', function ($delegate, $injector, $rootScope) {
 
                     rules.forEach(function (rule) {
                         var methodNames = getMethods($delegate, rule),
@@ -202,12 +203,12 @@
                             var joiner = Aspects[rule.jointPoint];
                             
                             return methodNames.forEach(function (methodName) {
-                                $delegate[methodName] = joiner($delegate[methodName], $injector.invoke(advice, null, getLocals($delegate, targetName, methodName)));
+                                $delegate[methodName] = joiner($delegate[methodName], $injector.invoke(advice, null, getLocals($delegate, targetName, methodName, $rootScope)));
                             });
                         }
 
                         methodNames.forEach(function (methodName) {
-                            $delegate[methodName] = $injector.invoke(advice, null, getLocals($delegate, targetName, methodName));
+                            $delegate[methodName] = $injector.invoke(advice, null, getLocals($delegate, targetName, methodName, $rootScope));
                         });
                     });
                     

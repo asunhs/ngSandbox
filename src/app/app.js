@@ -53,6 +53,9 @@ function FlowTest($provide, annotatorProvider, simpleAdviceProvider) {
         },{
             methodPattern : /One$/,
             advice : simpleAdviceProvider.LEADING
+        },{
+            methodPattern : /^do[A-Z]/,
+            advice : simpleAdviceProvider.DEFER
         }]
     });
 

@@ -5,10 +5,22 @@ function bye() {
 
 
 /* @ngInject */
-function SampleCtrl ($scope, Sample1) {
+function SampleCtrl ($q, $scope, Sample1) {
     $scope.name = "Foods";
     $scope.bye = () => Sample1.byeOne();
     $scope.byeOne = () => console.log("Good");
+    $scope.doBye = () => {
+        return $q(res => {
+            setTimeout(() => {
+                console.log("Do");
+                return res();
+            }, 2000);
+        });
+    };
+    
+    $scope.$on("defer.lock", function () {
+        console.log("SampleCtrl!!!!");
+    });
 }
 
 function hello(fn) {
