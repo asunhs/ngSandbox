@@ -63,6 +63,18 @@ gulp.task("pack", function () {
                     app: __dirname + "/src/app/app.js"
                 }
             },
+            module: {
+                loaders: [
+                    {
+                        test: /\.js$/,
+                        exclude: /(node_modules)/,
+                        loader: 'babel',
+                        query: {
+                            presets: ['es2015']
+                        }
+                    }
+                ]
+            },
             output: {
                 filename: 'app.js'
             }
