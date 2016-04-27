@@ -77,3 +77,12 @@ gulp.task("pack", function () {
 gulp.task("build", ["styles", "templates", "pack"]);
 
 gulp.task("default", ["index", "images", "libraries", "build"]);
+
+gulp.task("watch", ["default"], function () {
+    gulp.watch(config.app.js, ["pack"]);
+    gulp.watch(config.app.templates, ["templates"]);
+    gulp.watch(config.app.styles, ["styles"]);
+    gulp.watch(config.app.images, ["images"]);
+    gulp.watch(config.app.index, ["index"]);
+    gulp.watch(config.app.libraries, ["libraries"]);
+});
