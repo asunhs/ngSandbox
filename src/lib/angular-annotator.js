@@ -1,7 +1,9 @@
 (function () {
     'use strict';
 
-    var slice = Array.prototype.slice;
+    var slice = Array.prototype.slice,
+        extend = angular.extend,
+        isString = angular.isString;
 
     var Annotator = angular.module('Annotator', []);
 
@@ -21,7 +23,7 @@
         
         for (var prop in target) {
             if (target.hasOwnProperty(prop) && angular.isFunction(target[prop])) {
-                if (angular.isString(rule.method) && prop === rule.method) {
+                if (isString(rule.method) && prop === rule.method) {
                     return [rule.method];
                 } else if (!!rule.methodPattern && rule.methodPattern.test(prop)) {
                     methodNames.push(prop);
@@ -42,7 +44,7 @@
         DECORATED = "__decorated";
     
     function getAdvice(advice) {
-        if (angular.isString(advice) && !!Advices[advice]) {
+        if (isString(advice) && !!Advices[advice]) {
             return Advices[advice];
         } else {
             return advice;
@@ -101,7 +103,7 @@
                 if (!targetName) {
                     return false;
                 }
-                if (angular.isString(aspect.target) && targetName != aspect.target) {
+                if (isString(aspect.target) && targetName != aspect.target) {
                     return false;
                 }
                 if (!!aspect.targetPattern && !aspect.targetPattern.test(targetName)) {
@@ -111,49 +113,57 @@
             }
             
             self.$provide.decorator('$controller', ['$delegate', '$injector', function ($delegate, $injector) {
-                return function (constructor, locals, later) {
+                return function (constructor, locals, later, ident) {
                     var scope = locals.$scope,
                         controllerInit = $delegate.apply(this, arguments),
-                        targetName = angular.isString(constructor) ? constructor : undefined;
+                        targetName = isString(constructor) ? constructor : undefined,
+                        identifier;
+                    
+                    if (ident && isString(ident)) {
+                        identifier = ident;
+                    }
                     
                     function hook(instance) {
                         
-                        var cache = {};
+                        var cache = {},
+                            target = !identifier ? scope : instance;
                         
                         function decorate(methodNames, decorator) {
                             return methodNames.forEach(function (methodName) {
-                                if (!cache[methodName] && scope[methodName][DECORATED] == DECORATED) {
+                                if (!cache[methodName] && target[methodName][DECORATED] == DECORATED) {
                                     return;
                                 }
-                                scope[methodName] = decorator(methodName);
-                                scope[methodName][DECORATED] = cache[methodName] = DECORATED;
+                                target[methodName] = decorator(methodName);
+                                target[methodName][DECORATED] = cache[methodName] = DECORATED;
                             });
                         }
                         
                         if (isTarget(targetName)) {
                             rules.forEach(function (rule) {
-                                var methodNames = getMethods(scope, rule),
+                                var methodNames = getMethods(target, rule),
                                     advice = getAdvice(rule.advice);
+                                
+                                function invoke(methodName) {
+                                    return $injector.invoke(advice, null, getLocals(target, targetName, methodName, scope));
+                                }
                                 
                                 if (!!rule.jointPoint && !!Aspects[rule.jointPoint]) {
 
                                     var joiner = Aspects[rule.jointPoint];
 
                                     return decorate(methodNames, function (methodName) {
-                                        return joiner(scope[methodName], $injector.invoke(advice, null, getLocals(scope, targetName, methodName, scope)));
+                                        return joiner(target[methodName], invoke(methodName));
                                     });
                                 }
     
-                                decorate(methodNames, function (methodName) {
-                                    return $injector.invoke(advice, null, getLocals(scope, targetName, methodName, scope));
-                                });
+                                decorate(methodNames, invoke);
                             });
                         }
                         
                         return instance;
                     }
                     
-                    return angular.extend(function () {
+                    return extend(function () {
                         return hook(controllerInit());
                     }, controllerInit);
                 };
@@ -163,13 +173,13 @@
         };
         
         function getTargetServices(aspect) {
-            if (angular.isString(aspect.target)) {
+            if (isString(aspect.target)) {
                 return [aspect.target];
             }
             
             var modules;
             
-            if (angular.isString(aspect.modules)) {
+            if (isString(aspect.modules)) {
                 modules = [aspect.modules];
             } else if (angular.isArray(aspect.modules) && aspect.modules.length > 0) {
                 modules = aspect.modules;
@@ -197,18 +207,22 @@
                     rules.forEach(function (rule) {
                         var methodNames = getMethods($delegate, rule),
                             advice = getAdvice(rule.advice, $injector);
+
+                        function invoke(methodName) {
+                            return $injector.invoke(advice, null, getLocals($delegate, targetName, methodName, $rootScope));
+                        }
                         
                         if (!!rule.jointPoint && !!Aspects[rule.jointPoint]) {
                             
                             var joiner = Aspects[rule.jointPoint];
                             
                             return methodNames.forEach(function (methodName) {
-                                $delegate[methodName] = joiner($delegate[methodName], $injector.invoke(advice, null, getLocals($delegate, targetName, methodName, $rootScope)));
+                                $delegate[methodName] = joiner($delegate[methodName], invoke(methodName));
                             });
                         }
 
                         methodNames.forEach(function (methodName) {
-                            $delegate[methodName] = $injector.invoke(advice, null, getLocals($delegate, targetName, methodName, $rootScope));
+                            $delegate[methodName] = invoke(methodName);
                         });
                     });
                     
@@ -232,12 +246,12 @@
         this.registerAdvice = registerAdvice;
         
         this.$get = [function () {
-            return angular.extend({
+            return extend({
                 getDecorator: getDecorator
             }, JointPoints);
         }];
         
-        angular.extend(this, JointPoints);
+        extend(this, JointPoints);
 
     }]);
 })();

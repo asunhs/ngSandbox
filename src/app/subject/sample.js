@@ -6,10 +6,13 @@ function bye() {
 
 /* @ngInject */
 function SampleCtrl ($q, $scope, Sample1) {
-    $scope.name = "Foods";
-    $scope.bye = () => Sample1.byeOne();
-    $scope.byeOne = () => console.log("Good");
-    $scope.doBye = () => {
+    
+    var sample = this;
+
+    sample.name = "Foods";
+    sample.bye = () => Sample1.byeOne();
+    sample.byeOne = () => console.log("Good");
+    sample.doBye = () => {
         return $q(res => {
             setTimeout(() => {
                 console.log("Do");
@@ -42,7 +45,8 @@ module.exports = require('app').directive('packSample', /* @ngInject */ function
                 }
             };
         },
-        controller: 'SampleCtrl'
+        controller: 'SampleCtrl',
+        controllerAs: 'sample'
     };
 }).controller('SampleCtrl', SampleCtrl);
 
@@ -56,6 +60,7 @@ require('app').service('Sample1', /* @ngInject */ function ($http, $q, LockTest)
     svc.send = send;
 
     function test() {
+        /*
         console.log("Good");
 
         setTimeout(() => {
@@ -83,6 +88,7 @@ require('app').service('Sample1', /* @ngInject */ function ($http, $q, LockTest)
             console.log("Call");
             LockTest.callMeOnce();
         }, 4000);
+        */
     }
 
     svc.test = test;
