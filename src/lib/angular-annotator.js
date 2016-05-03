@@ -11,6 +11,17 @@
 
     var Annotator = angular.module('Annotator', []);
 
+    function safeApply(fn) {
+        var phase = this.$root.$$phase;
+        if(phase == '$apply' || phase == '$digest') {
+            if(fn && (typeof(fn) === 'function')) {
+                fn();
+            }
+        } else {
+            this.$apply(fn);
+        }
+    }
+
     function getServices(moduleNames) {
         return moduleNames.map(function (moduleName) {
             return angular.module(moduleName)._invokeQueue.filter(function (info) {
@@ -124,6 +135,8 @@
                         targetName,
                         identifier,
                         match;
+
+                    scope.safeApply = safeApply;
                     
                     if (ident && isString(ident)) {
                         identifier = ident;
