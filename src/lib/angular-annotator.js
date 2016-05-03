@@ -3,7 +3,11 @@
 
     var slice = Array.prototype.slice,
         extend = angular.extend,
-        isString = angular.isString;
+        isString = angular.isString,
+        isArray = angular.isArray,
+        isFunction = angular.isFunction;
+
+    var CNTRL_REG = /^(\S+)(\s+as\s+([\w$]+))?$/;
 
     var Annotator = angular.module('Annotator', []);
 
@@ -19,13 +23,14 @@
 
     function getMethods(target, rule) {
         
-        var methodNames = [];
+        var methodNames = [],
+            pattern = rule.methodPattern;
         
         for (var prop in target) {
-            if (target.hasOwnProperty(prop) && angular.isFunction(target[prop])) {
+            if (target.hasOwnProperty(prop) && isFunction(target[prop])) {
                 if (isString(rule.method) && prop === rule.method) {
                     return [rule.method];
-                } else if (!!rule.methodPattern && rule.methodPattern.test(prop)) {
+                } else if (!!pattern && pattern.test(prop)) {
                     methodNames.push(prop);
                 }
             }
@@ -94,7 +99,7 @@
         Decorator.prototype.controller = function (aspect) {
 
             var self = this,
-                rules = angular.isArray(aspect.rules) ? aspect.rules : [aspect.rules];
+                rules = isArray(aspect.rules) ? aspect.rules : [aspect.rules];
 
             function isTarget(targetName) {
                 if (!aspect.target && !aspect.targetPattern) {
@@ -113,14 +118,23 @@
             }
             
             self.$provide.decorator('$controller', ['$delegate', '$injector', function ($delegate, $injector) {
-                return function (constructor, locals, later, ident) {
+                return function (expression, locals, later, ident) {
                     var scope = locals.$scope,
                         controllerInit = $delegate.apply(this, arguments),
-                        targetName = isString(constructor) ? constructor : undefined,
-                        identifier;
+                        targetName,
+                        identifier,
+                        match;
                     
                     if (ident && isString(ident)) {
                         identifier = ident;
+                    }
+
+                    if (isString(expression)) {
+                        match = expression.match(CNTRL_REG);
+                        if (match) {
+                            targetName = match[1];
+                            identifier = identifier || match[3];
+                        }
                     }
                     
                     function hook(instance) {
@@ -181,14 +195,16 @@
             
             if (isString(aspect.modules)) {
                 modules = [aspect.modules];
-            } else if (angular.isArray(aspect.modules) && aspect.modules.length > 0) {
+            } else if (isArray(aspect.modules) && aspect.modules.length > 0) {
                 modules = aspect.modules;
             } else {
                 throw "no conditional or service pattern matching for finding services need specific modules { modules: [] }";
             }
 
             if (!!aspect.targetPattern) {
-                return getServices(modules).filter(aspect.targetPattern.test);
+                return getServices(modules).filter(function (moduleName) {
+                    return aspect.targetPattern.test(moduleName);
+                });
             } else {
                 return getServices(modules);
             }
@@ -198,7 +214,7 @@
             
             var self = this,
                 targets = getTargetServices(aspect),
-                rules = angular.isArray(aspect.rules) ? aspect.rules : [aspect.rules];
+                rules = isArray(aspect.rules) ? aspect.rules : [aspect.rules];
             
             targets.forEach(function (targetName) {
                 
