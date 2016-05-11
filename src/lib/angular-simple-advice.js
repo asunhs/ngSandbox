@@ -11,7 +11,8 @@
             DEFER_BY_KEY : 'deferByKey',
             DEBOUNCE : 'debounce',
             LEADING : 'leading',
-            THROTTLE : 'throttle'
+            THROTTLE : 'throttle',
+            ASYNC : 'async'
         };
 
     Advices[Flows.DEFER] = ['$delegate', '$aspect', '$scope', 'simpleAdvice', function ($delegate, $aspect, $scope, simpleAdvice) {
@@ -39,6 +40,10 @@
 
     Advices[Flows.THROTTLE] = ['$delegate', 'simpleAdvice', function ($delegate, simpleAdvice) {
         return simpleAdvice.throttle($delegate);
+    }];
+    
+    Advices[Flows.ASYNC] = ['$delegate', 'simpleAdvice', function ($delegate, simpleAdvice) {
+        return simpleAdvice.async($delegate);
     }];
 
     function getAdvice(advice) {
@@ -156,11 +161,18 @@
                 return _.throttle(target, time || defaultThrottleTime);
             }
             
+            function async(target) {
+                return function __asyncWrapper__() {
+                    return $q.when(target.apply(this, slice.apply(arguments)));
+                };
+            }
+            
             return angular.extend({
                 defer: defer,
                 debounce: debounce,
                 leading: leading,
-                throttle: throttle
+                throttle: throttle,
+                async: async
             }, Flows);
         }];
 
