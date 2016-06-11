@@ -190,9 +190,16 @@
                         return instance;
                     }
                     
-                    return extend(function () {
-                        return hook(controllerInit());
-                    }, controllerInit);
+                    
+                    if (later) {
+                        return extend(function () {
+                            return hook(controllerInit());
+                        }, controllerInit);
+                    } else {
+                        return hook(controllerInit);
+                    }
+                    
+                    
                 };
             }]);
             
