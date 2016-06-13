@@ -152,26 +152,25 @@
                     
                     function hook(instance) {
                         
-                        var cache = {},
-                            target = !identifier ? scope : instance;
+                        var cache = {};
                         
                         function decorate(methodNames, decorator) {
                             return methodNames.forEach(function (methodName) {
-                                if (!cache[methodName] && target[methodName][DECORATED] == DECORATED) {
+                                if (!cache[methodName] && instance[methodName][DECORATED] == DECORATED) {
                                     return;
                                 }
-                                target[methodName] = decorator(methodName);
-                                target[methodName][DECORATED] = cache[methodName] = DECORATED;
+                                instance[methodName] = decorator(methodName);
+                                instance[methodName][DECORATED] = cache[methodName] = DECORATED;
                             });
                         }
                         
                         if (isTarget(targetName)) {
                             rules.forEach(function (rule) {
-                                var methodNames = getMethods(target, rule),
+                                var methodNames = getMethods(instance, rule),
                                     advice = getAdvice(rule.advice);
                                 
                                 function invoke(methodName) {
-                                    return $injector.invoke(advice, null, getLocals(target, targetName, methodName, scope));
+                                    return $injector.invoke(advice, null, getLocals(instance, targetName, methodName, scope));
                                 }
                                 
                                 if (!!rule.jointPoint && !!Aspects[rule.jointPoint]) {
@@ -179,7 +178,7 @@
                                     var joiner = Aspects[rule.jointPoint];
 
                                     return decorate(methodNames, function (methodName) {
-                                        return joiner(target[methodName], invoke(methodName));
+                                        return joiner(instance[methodName], invoke(methodName));
                                     });
                                 }
     
@@ -190,7 +189,6 @@
                         return instance;
                     }
                     
-                    
                     if (later) {
                         return extend(function () {
                             return hook(controllerInit());
@@ -198,7 +196,6 @@
                     } else {
                         return hook(controllerInit);
                     }
-                    
                     
                 };
             }]);
