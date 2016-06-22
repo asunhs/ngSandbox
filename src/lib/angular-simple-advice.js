@@ -12,6 +12,7 @@
             DEBOUNCE : 'debounce',
             LEADING : 'leading',
             THROTTLE : 'throttle',
+            CACHE: 'cache',
             ASYNC : 'async'
         };
 
@@ -40,6 +41,10 @@
 
     Advices[Flows.THROTTLE] = ['$delegate', 'simpleAdvice', function ($delegate, simpleAdvice) {
         return simpleAdvice.throttle($delegate);
+    }];
+    
+    Advices[Flows.CACHE] = ['$delegate', 'simpleAdvice', function ($delegate, simpleAdvice) {
+        return simpleAdvice.cache($delegate);
     }];
     
     Advices[Flows.ASYNC] = ['$delegate', 'simpleAdvice', function ($delegate, simpleAdvice) {
@@ -167,11 +172,34 @@
                 };
             }
             
+            function cache(target) {
+                var cache = {};
+                return function __cacheWrapper__() {
+                    var args = slice.apply(arguments),
+                        result;
+                    
+                    if (cache[args]) {
+                        return $q.when(cache[args]);
+                    }
+                    
+                    result = target.apply(this, slice.apply(args));
+                    
+                    $q.when(result).then(() => {
+                        delete cache[args];
+                    });
+
+                    cache[args] = result;
+
+                    return $q.when(result);
+                };
+            }
+            
             return angular.extend({
                 defer: defer,
                 debounce: debounce,
                 leading: leading,
                 throttle: throttle,
+                cache: cache,
                 async: async
             }, Flows);
         }];
