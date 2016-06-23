@@ -184,7 +184,7 @@
                     
                     result = target.apply(this, slice.apply(args));
                     
-                    $q.when(result).then(() => {
+                    $q.when(result).then(function() {
                         delete cache[args];
                     });
 
