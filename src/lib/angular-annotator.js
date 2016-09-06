@@ -12,6 +12,10 @@
     var Annotator = angular.module('Annotator', []);
 
     function safeApply(fn) {
+        if (this.$$destroyed) {
+            return;
+        }
+
         var phase = this.$root.$$phase;
         if(phase == '$apply' || phase == '$digest') {
             if(fn && (typeof(fn) === 'function')) {
